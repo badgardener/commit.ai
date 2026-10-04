@@ -63,9 +63,7 @@ def Generate(path: Path, provider: ProviderOptions) -> None:
         print(f"[red]No key added to the app for {provider}.[/red]")
         return
 
-    prmp: str = prompt.BuildFullPrompt(
-        prompt.GetRawPrompt(path), prompt.GetDirectionPrompt()
-    )
+    prmp: str = prompt.BuildFullPrompt(path)
     context: ai.AI = ai.AI(prmp)
 
     match provider:

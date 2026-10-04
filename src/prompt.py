@@ -22,7 +22,7 @@ class PromptBuildError(Exception):
         return super().__str__()
 
 
-def GetRawPrompt(path: Path) -> str:
+def raw_prompt(path: Path) -> str:
     try:
         repo = Repo(path)
     except InvalidGitRepositoryError:
@@ -108,7 +108,7 @@ def GetRawPrompt(path: Path) -> str:
     return raw_prompt
 
 
-def GetDirectionPrompt() -> LiteralString:
+def direction_prompt() -> LiteralString:
     return """You are an expert Git commit message generator.
 
 Analyze the provided Git repository context, including:
@@ -150,5 +150,5 @@ Repository context:
 <<GIT_CONTEXT>>"""
 
 
-def BuildFullPrompt(context: str, direction: str) -> str:
-    return direction.replace("<<GIT_CONTEXT>>", context).strip()
+def BuildFullPrompt(path: Path) -> str:
+    return direction_prompt().replace("<<GIT_CONTEXT>>", raw_prompt(path)).strip()

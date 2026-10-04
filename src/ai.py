@@ -1,4 +1,4 @@
-from .provider import anthropic, error, genai, groq, openai, openrouter
+from provider import anthropic, error, genai, groq, openai, openrouter
 
 
 class AI:

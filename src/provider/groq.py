@@ -10,11 +10,11 @@ def GetResponse(prompt: str, key: str) -> str:
     if len(prompt.split()) < 20 and not any(
         k in prompt.lower() for k in ["analyze", "optimize", "complex", "code"]
     ):
-        primary_model = "llama-3.1-8b-instant"
+        primary_model = "openai/gpt-oss-20b"
         fallback_model = None
     else:
-        primary_model = "llama-3.3-70b-versatile"
-        fallback_model = "llama-3.1-8b-instant"
+        primary_model = "openai/gpt-oss-120b"
+        fallback_model = "openai/gpt-oss-20b"
 
     try:
         response = client.chat.completions.create(

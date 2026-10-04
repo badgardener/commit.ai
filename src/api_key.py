@@ -5,18 +5,18 @@ import keyring
 APP = "Commit.AI"
 
 ApiService = Literal[
-    "openai_secret_key",
-    "openrouter_secret_key",
-    "genai_secret_key",
-    "anthropic_secret_key",
-    "groq_secret_key",
+    "openai",
+    "openrouter",
+    "groq",
+    "genai",
+    "anthropic",
 ]
 
-OPEN_AI_SERVICE = "openai_secret_key"
-OPEN_ROUTER_SERVICE = "openrouter_secret_key"
-GENAI_SERVICE = "genai_secret_key"
-ANTHROPIC_SERVICE = "anthropic_secret_key"
-GROQ_SERVICE = "groq_secret_key"
+OPEN_AI_SERVICE = "openai"
+OPEN_ROUTER_SERVICE = "openrouter"
+GENAI_SERVICE = "genai"
+ANTHROPIC_SERVICE = "anthropic"
+GROQ_SERVICE = "groq"
 
 
 def HowManyKeys() -> int:

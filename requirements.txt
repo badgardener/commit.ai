@@ -1,1 +1,7 @@
 GitPython~=3.2.0
+
+# AI providers
+openai~=3.24.0
+google-genai~=2.28.0
+anthropic~=1.11.0
+groq~=1.7.0

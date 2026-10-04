@@ -143,11 +143,11 @@ Rules:
 - If it restructures existing code without changing behavior, use `refactor:`.
 - If it is mainly maintenance, dependencies, configuration, or tooling, use `chore:` or the most appropriate type.
 - Do not include Markdown code fences.
-- Output only the commit message.
+- Output only the raw commit message.
 
 Repository context:
 <<GIT_CONTEXT>>"""
 
 
 def BuildFullPrompt(context: str, direction: str) -> str:
-    return direction.replace("<<GIT_CONTEXT>>", context)
+    return direction.replace("<<GIT_CONTEXT>>", context).strip()

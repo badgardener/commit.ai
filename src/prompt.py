@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from typing import LiteralString
 
 from git import (
     BadName,
@@ -21,7 +22,7 @@ class PromptBuildError(Exception):
         return super().__str__()
 
 
-def GetRawPrompt(path: Path):
+def GetRawPrompt(path: Path) -> str:
     try:
         repo = Repo(path)
     except InvalidGitRepositoryError:
@@ -104,3 +105,49 @@ def GetRawPrompt(path: Path):
         raw_prompt += new_files
 
     return raw_prompt
+
+
+def GetDirectionPrompt() -> LiteralString:
+    return """You are an expert Git commit message generator.
+
+Analyze the provided Git repository context, including:
+- Previous commit history
+- Staged/unstaged diffs
+- Newly added files
+- Modified or deleted files
+
+Generate a concise Git commit message using the Conventional Commits format.
+
+Format the output exactly as:
+
+```
+<type>: <short description>
+
+- <specific change>
+- <specific change>
+- <specific change>
+```
+
+Rules:
+- Use a valid Conventional Commit type such as feat, fix, refactor, perf, docs, test, chore, build, or ci.
+- The subject must be concise, imperative, and describe the primary change.
+- Keep the subject lowercase.
+- Add a blank line between the subject and body.
+- Use bullet points to summarize the important changes.
+- Each bullet should describe an actual change present in the provided repository context.
+- Do not invent changes or functionality.
+- Do not include unnecessary details.
+- Prefer 3-6 meaningful bullets.
+- If the change is primarily a bug fix, use `fix:`.
+- If it adds functionality, use `feat:`.
+- If it restructures existing code without changing behavior, use `refactor:`.
+- If it is mainly maintenance, dependencies, configuration, or tooling, use `chore:` or the most appropriate type.
+- Do not include Markdown code fences.
+- Output only the commit message.
+
+Repository context:
+<<GIT_CONTEXT>>"""
+
+
+def BuildFullPrompt(context: str, direction: str) -> str:
+    return direction.replace("<<GIT_CONTEXT>>", context)

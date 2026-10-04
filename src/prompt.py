@@ -43,6 +43,7 @@ def GetRawPrompt(path: Path) -> str:
         last_commits = [
             (str(c.message), c.committed_datetime) for c in repo.iter_commits()
         ]
+        last_commits = last_commits[: min(16, len(last_commits))]
     except ValueError:
         pass
 
@@ -97,7 +98,7 @@ def GetRawPrompt(path: Path) -> str:
 
     raw_prompt: str = ""
 
-    if last_commits and len(last_commits) < 256:
+    if last_commits:
         raw_prompt += commit_history
     if diffs:
         raw_prompt += diff_message

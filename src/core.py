@@ -3,7 +3,7 @@ from typing import get_args
 
 import rich
 import rich.prompt
-from rich import print
+from rich import print as rprint
 
 import ai
 import api_key
@@ -25,7 +25,7 @@ def AddApi(provider: ProviderOptions) -> None:
 
 def RemoveApi(provider: ProviderOptions) -> None:
     if not api_key.GetApiKey(provider):
-        print(f"[red]No key added to the app for {provider}.[/red]")
+        rprint(f"[red]No key added to the app for {provider}.[/red]")
         return
 
     if rich.prompt.Confirm.ask("Remove?"):
@@ -34,50 +34,55 @@ def RemoveApi(provider: ProviderOptions) -> None:
 
 def ListApi() -> None:
     if api_key.HowManyKeys() == 0:
-        print("[red]No keys added to the app.[/red]")
+        rprint("[red]No keys added to the app.[/red]")
         return
 
-    api_key.GetApiKey(api_key.OPEN_AI_SERVICE) and print(
+    api_key.GetApiKey(api_key.OPEN_AI_SERVICE) and rprint(
         "[green]OpenAI Service available.[/green]"
     )  # pyright: ignore[reportUnusedExpression]
 
-    api_key.GetApiKey(api_key.OPEN_ROUTER_SERVICE) and print(
+    api_key.GetApiKey(api_key.OPEN_ROUTER_SERVICE) and rprint(
         "[green]Open Router Service available.[/green]"
     )  # pyright: ignore[reportUnusedExpression]
 
-    api_key.GetApiKey(api_key.GENAI_SERVICE) and print(
+    api_key.GetApiKey(api_key.GENAI_SERVICE) and rprint(
         "[green]GenAI Service available.[/green]"
     )  # pyright: ignore[reportUnusedExpression]
 
-    api_key.GetApiKey(api_key.GROQ_SERVICE) and print(
+    api_key.GetApiKey(api_key.GROQ_SERVICE) and rprint(
         "[green]Groq Service available.[/green]"
     )  # pyright: ignore[reportUnusedExpression]
 
-    api_key.GetApiKey(api_key.ANTHROPIC_SERVICE) and print(
+    api_key.GetApiKey(api_key.ANTHROPIC_SERVICE) and rprint(
         "[green]Anthropic Service available.[/green]"
     )  # pyright: ignore[reportUnusedExpression]
 
 
 def Generate(path: Path, provider: ProviderOptions) -> None:
     if not (key := api_key.GetApiKey(provider)):
-        print(f"[red]No key added to the app for {provider}.[/red]")
+        rprint(f"[red]No key added to the app for {provider}.[/red]")
         return
 
     prmp: str = prompt.BuildFullPrompt(path)
     context: ai.AI = ai.AI(prmp)
 
+    print(
+        "NOTE: AI CAN GIVE INCORRECT OR INCOMPLETE INFORMATION."
+        " ALWAYS REVIEW THE GENERATED COMMIT MESSAGE BEFORE USING IT.",
+        end="",
+        flush=True,
+    )
+
     match provider:
         case "openai":
-            print(context.GetFromOpenAI(key))
-
+            response = context.GetFromOpenAI(key)
         case "anthropic":
-            print(context.GetFromAnthropic(key))
-
+            response = context.GetFromAnthropic(key)
         case "genai":
-            print(context.GetFromGenAI(key))
-
+            response = context.GetFromGenAI(key)
         case "groq":
-            print(context.GetFromGroq(key))
-
+            response = context.GetFromGroq(key)
         case "openrouter":
-            print(context.GetFromOpenRouter(key))
+            response = context.GetFromOpenRouter(key)
+
+    print(f"\r\033[2K{response}")

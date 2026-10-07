@@ -17,20 +17,20 @@ def GetResponse(prompt: str, key: str) -> str:
     for model in models:
         try:
             response = client.messages.create(
-                model=model,
+                model=model.id,
                 max_tokens=1024,
                 messages=[{"role": "user", "content": prompt}],
             )
             return response.content[0].text or ""
         except anthropic.NotFoundError as e:
-            errors.append(f"{model}: {e}")
+            errors.append(f"{model.id}: {e}")
         except anthropic.RateLimitError as e:
-            errors.append(f"{model}: {e}")
+            errors.append(f"{model.id}: {e}")
         except anthropic.BadRequestError as e:
-            errors.append(f"{model}: {e}")
+            errors.append(f"{model.id}: {e}")
         except anthropic.APIStatusError as e:
-            errors.append(f"{model}: {e}")
+            errors.append(f"{model.id}: {e}")
         except Exception as e:  # noqa: BLE001
-            errors.append(f"{model}: {e}")
+            errors.append(f"{model.id}: {e}")
 
     raise AIError("All available Anthropic models failed:\n" + "\n".join(errors))

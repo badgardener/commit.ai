@@ -175,13 +175,9 @@ def Generate(path: Path, provider: ProviderOptions) -> None:
     prmp: str = prompt.BuildFullPrompt(path)
     context: ai.AI = ai.AI(prmp)
 
-    note_msg: str = (
-        "Generating... NOTE: AI can give incorrect information. "
-        "Always review the generated commit message before using it."
-    )
-
     print(
-        note_msg,
+        "Generating... NOTE: AI can give incorrect information. "
+        "Always review the generated commit message before using it.",
         end="",
         flush=True,
     )
@@ -199,9 +195,9 @@ def Generate(path: Path, provider: ProviderOptions) -> None:
             response = context.GetFromOpenRouter(key)
 
     print(
-        f"\r{' ' * len(note_msg)}",
+        "\r\033[K",
         end="",
         flush=True,
     )
 
-    print(f"\r{response}")
+    print(f"\r{'\n'.join([r.strip() for r in response.split('\n')])}")

@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 from pathlib import Path
 
@@ -171,6 +172,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     try:
+        if platform.system() == "Windows":
+            os.system("")  # Enable '\r\033' work in Windows too.
+
         main()
     except Exception as e:  # noqa: BLE001
         console.print(

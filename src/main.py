@@ -7,6 +7,7 @@ import rich
 from rich.console import Console
 
 import core
+import prompt
 from core import (
     DRAGON_BLUE,
     DRAGON_FG,
@@ -18,7 +19,7 @@ from core import (
     DRAGON_YELLOW,
 )
 
-VERSION = "26.1.0"
+VERSION = "26.1.1"
 
 console = Console()
 
@@ -26,7 +27,7 @@ console = Console()
 def print_help() -> None:
     console.print(
         f"\n[bold {DRAGON_FG}]Usage:[/bold {DRAGON_FG}] "
-        f"[bold {DRAGON_YELLOW}]Commit.AI[/bold {DRAGON_YELLOW}] "
+        f"[bold {DRAGON_YELLOW}]commit.ai[/bold {DRAGON_YELLOW}] "
         f"[{DRAGON_BLUE}]<command> [arguments][/{DRAGON_BLUE}]\n\n"
         f"[bold {DRAGON_PURPLE}]Options:[/bold {DRAGON_PURPLE}]\n"
         f"  [{DRAGON_GREEN}]-h, --help[/{DRAGON_GREEN}]          Show this help message and exit.\n"
@@ -36,6 +37,7 @@ def print_help() -> None:
         f"  [{DRAGON_GREEN}]remove-api[/{DRAGON_GREEN}]         Remove a stored API key.\n"
         f"  [{DRAGON_GREEN}]list-api[/{DRAGON_GREEN}]           List configured AI providers.\n"
         f"  [{DRAGON_GREEN}]generate[/{DRAGON_GREEN}]           Generate a Git commit message from repository changes.\n"
+        f"  [{DRAGON_GREEN}]generate-prompt[/{DRAGON_GREEN}]    Generate and display the full prompt for a repository.\n"
     )
 
 
@@ -79,6 +81,17 @@ def print_command_help(command: str) -> None:
             f"[{DRAGON_MUTED}][default: .][/{DRAGON_MUTED}]\n"
         )
 
+    elif command == "generate-prompt":
+        console.print(
+            f"\n[bold {DRAGON_FG}]Usage:[/bold {DRAGON_FG}] "
+            f"[bold {DRAGON_YELLOW}]Commit.AI generate-prompt[/bold {DRAGON_YELLOW}] "
+            f"[{DRAGON_BLUE}]\\[path][/{DRAGON_BLUE}]\n\n"
+            f"[{DRAGON_FG}]Generate and display the full AI prompt for a repository without calling an AI provider.[/{DRAGON_FG}]\n\n"
+            f"[bold {DRAGON_PURPLE}]Arguments:[/bold {DRAGON_PURPLE}]\n"
+            f"  [{DRAGON_GREEN}]\\[path][/{DRAGON_GREEN}]           Path to the Git repository. "
+            f"[{DRAGON_MUTED}][default: .][/{DRAGON_MUTED}]\n"
+        )
+
 
 def validate_provider(provider_str: str) -> None:
     if provider_str in core.ProviderOptionsList:
@@ -118,7 +131,7 @@ def main() -> None:
 
         provider = args[1]
         validate_provider(provider)
-        core.AddApi(provider)
+        core.AddApi(provider)  # type: ignore
 
     elif command == "remove-api":
         if len(args) > 1 and args[1] in ("-h", "--help"):
@@ -130,7 +143,7 @@ def main() -> None:
 
         provider = args[1]
         validate_provider(provider)
-        core.RemoveApi(provider)
+        core.RemoveApi(provider)  # type: ignore
 
     elif command == "list-api":
         if len(args) > 1 and args[1] in ("-h", "--help"):
@@ -162,7 +175,27 @@ def main() -> None:
         if not os.access(path, os.R_OK):
             raise PermissionError(f"Path is not readable: {path_str}")
 
-        core.Generate(path, provider)
+        core.Generate(path, provider)  # type: ignore
+
+    elif command == "generate-prompt":
+        if len(args) > 1 and args[1] in ("-h", "--help"):
+            print_command_help(command)
+            sys.exit(0)
+
+        path_str = args[1] if len(args) > 1 else "."
+        path = Path(path_str).resolve()
+
+        if not path.exists():
+            raise FileNotFoundError(f"Path does not exist: {path_str}")
+
+        if not path.is_dir():
+            raise ValueError(f"Path is not a directory: {path_str}")
+
+        if not os.access(path, os.R_OK):
+            raise PermissionError(f"Path is not readable: {path_str}")
+
+        prmpt = prompt.BuildFullPrompt(path)
+        print(prmpt)
 
     else:
         raise ValueError(
@@ -173,7 +206,7 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         if platform.system() == "Windows":
-            os.system("")  # Enable '\r\033' work in Windows too.
+            os.system("")  # type: ignore
 
         main()
     except Exception as e:  # noqa: BLE001

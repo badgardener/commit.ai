@@ -22,7 +22,7 @@ def GetResponse(prompt: str, key: str) -> str:
             continue
 
         try:
-            response = client.models.generate_content(
+            response = client.models.generate_content(  # type: ignore
                 model=name,
                 contents=prompt,
             )

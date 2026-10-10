@@ -160,19 +160,19 @@ def ListApi() -> None:
     )
 
     for service, name in services:
-        if api_key.GetApiKey(service):
+        if api_key.GetApiKey(service):  # type: ignore
             rprint(
                 f"[{DRAGON_GREEN}]●[/{DRAGON_GREEN}] "
                 f"[{DRAGON_FG}]{name} Service available.[/{DRAGON_FG}]"
             )
 
 
-def Generate(path: Path, provider: ProviderOptions) -> None:
+def Generate(path: Path, provider: ProviderOptions, request: str | None = None) -> None:
     if not (key := api_key.GetApiKey(provider)):
         rprint(f"[{DRAGON_RED}]No key added to the app for {provider}.[/{DRAGON_RED}]")
         return
 
-    prmp: str = prompt.BuildFullPrompt(path)
+    prmp: str = prompt.BuildFullPrompt(path, request)
     context: ai.AI = ai.AI(prmp)
 
     print(

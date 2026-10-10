@@ -19,7 +19,7 @@ from core import (
     DRAGON_YELLOW,
 )
 
-VERSION = "26.1.1"
+VERSION = "26.1.2"
 
 console = Console()
 
@@ -38,6 +38,8 @@ def print_help() -> None:
         f"  [{DRAGON_GREEN}]list-api[/{DRAGON_GREEN}]           List configured AI providers.\n"
         f"  [{DRAGON_GREEN}]generate[/{DRAGON_GREEN}]           Generate a Git commit message from repository changes.\n"
         f"  [{DRAGON_GREEN}]generate-prompt[/{DRAGON_GREEN}]    Generate and display the full prompt for a repository.\n"
+        f"\n[bold {DRAGON_PURPLE}]Style:[/bold {DRAGON_PURPLE}]\n"
+        f"  [{DRAGON_GREEN}]--style <style>[/{DRAGON_GREEN}]  Add a custom style instruction to the generated prompt.\n"
     )
 
 
@@ -73,23 +75,25 @@ def print_command_help(command: str) -> None:
         console.print(
             f"\n[bold {DRAGON_FG}]Usage:[/bold {DRAGON_FG}] "
             f"[bold {DRAGON_YELLOW}]Commit.AI generate[/bold {DRAGON_YELLOW}] "
-            f"[{DRAGON_BLUE}]<provider> \\[path][/{DRAGON_BLUE}]\n\n"
+            f"[{DRAGON_BLUE}]<provider> [path] [--style <request>][/{DRAGON_BLUE}]\n\n"
             f"[{DRAGON_FG}]Generate a Git commit message from repository changes.[/{DRAGON_FG}]\n\n"
             f"[bold {DRAGON_PURPLE}]Arguments:[/bold {DRAGON_PURPLE}]\n"
-            f"  [{DRAGON_GREEN}]<provider>[/{DRAGON_GREEN}]       AI provider to use for commit message generation.\n"
-            f"  [{DRAGON_GREEN}]\\[path][/{DRAGON_GREEN}]           Path to the Git repository. "
+            f"  [{DRAGON_GREEN}]<provider>[/{DRAGON_GREEN}]        AI provider to use for commit message generation.\n"
+            f"  [{DRAGON_GREEN}][path][/{DRAGON_GREEN}]            Path to the Git repository. "
             f"[{DRAGON_MUTED}][default: .][/{DRAGON_MUTED}]\n"
+            f"  [{DRAGON_GREEN}]--style <style>[/{DRAGON_GREEN}]  Add a custom style instruction to the prompt before generation.\n"
         )
 
     elif command == "generate-prompt":
         console.print(
             f"\n[bold {DRAGON_FG}]Usage:[/bold {DRAGON_FG}] "
             f"[bold {DRAGON_YELLOW}]Commit.AI generate-prompt[/bold {DRAGON_YELLOW}] "
-            f"[{DRAGON_BLUE}]\\[path][/{DRAGON_BLUE}]\n\n"
+            f"[{DRAGON_BLUE}][path] [--style <request>][/{DRAGON_BLUE}]\n\n"
             f"[{DRAGON_FG}]Generate and display the full AI prompt for a repository without calling an AI provider.[/{DRAGON_FG}]\n\n"
             f"[bold {DRAGON_PURPLE}]Arguments:[/bold {DRAGON_PURPLE}]\n"
-            f"  [{DRAGON_GREEN}]\\[path][/{DRAGON_GREEN}]           Path to the Git repository. "
+            f"  [{DRAGON_GREEN}][path][/{DRAGON_GREEN}]            Path to the Git repository. "
             f"[{DRAGON_MUTED}][default: .][/{DRAGON_MUTED}]\n"
+            f"  [{DRAGON_GREEN}]--style <style>[/{DRAGON_GREEN}]  Add a custom style instruction to the generated prompt.\n"
         )
 
 
@@ -99,6 +103,38 @@ def validate_provider(provider_str: str) -> None:
 
     valid_options = ", ".join(core.ProviderOptionsList)
     raise ValueError(f"Invalid provider '{provider_str}'. Choose from: {valid_options}")
+
+
+def parse_optional_request(
+    args: list[str], *, command: str
+) -> tuple[str | None, list[str]]:
+    request: str | None = None
+    remaining: list[str] = []
+    index = 0
+
+    while index < len(args):
+        token = args[index]
+
+        if token in ("-h", "--help"):
+            print_command_help(command)
+            sys.exit(0)
+
+        if token == "--style":
+            if index + 1 >= len(args):
+                raise ValueError("Missing value for style.")
+            request = args[index + 1]
+            index += 2
+            continue
+
+        if token.startswith("-"):
+            raise ValueError(
+                f"Unknown option: '{token}'. Use --help to list available options."
+            )
+
+        remaining.append(token)
+        index += 1
+
+    return request, remaining
 
 
 def main() -> None:
@@ -153,18 +189,20 @@ def main() -> None:
         core.ListApi()
 
     elif command == "generate":
-        if len(args) > 1 and args[1] in ("-h", "--help"):
-            print_command_help(command)
-            sys.exit(0)
-
         if len(args) < 2:
             raise ValueError("Missing required argument: <provider>")
 
         provider = args[1]
         validate_provider(provider)
 
-        path_str = args[2] if len(args) > 2 else "."
+        request, remaining = parse_optional_request(args[2:], command=command)
+        path_str = remaining[0] if remaining else "."
         path = Path(path_str).resolve()
+
+        if len(remaining) > 1:
+            raise ValueError(
+                f"Unknown option: '{remaining[1]}'. Use --help to list available options."
+            )
 
         if not path.exists():
             raise FileNotFoundError(f"Path does not exist: {path_str}")
@@ -175,15 +213,17 @@ def main() -> None:
         if not os.access(path, os.R_OK):
             raise PermissionError(f"Path is not readable: {path_str}")
 
-        core.Generate(path, provider)  # type: ignore
+        core.Generate(path, provider, request)  # type: ignore
 
     elif command == "generate-prompt":
-        if len(args) > 1 and args[1] in ("-h", "--help"):
-            print_command_help(command)
-            sys.exit(0)
-
-        path_str = args[1] if len(args) > 1 else "."
+        request, remaining = parse_optional_request(args[1:], command=command)
+        path_str = remaining[0] if remaining else "."
         path = Path(path_str).resolve()
+
+        if len(remaining) > 1:
+            raise ValueError(
+                f"Unknown option: '{remaining[1]}'. Use --help to list available options."
+            )
 
         if not path.exists():
             raise FileNotFoundError(f"Path does not exist: {path_str}")
@@ -194,7 +234,7 @@ def main() -> None:
         if not os.access(path, os.R_OK):
             raise PermissionError(f"Path is not readable: {path_str}")
 
-        prmpt = prompt.BuildFullPrompt(path)
+        prmpt = prompt.BuildFullPrompt(path, request)
         print(prmpt)
 
     else:
